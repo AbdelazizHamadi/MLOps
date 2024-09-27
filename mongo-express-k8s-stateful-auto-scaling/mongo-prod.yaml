@@ -1,0 +1,111 @@
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: mongo-role
+  namespace: mongodb
+
+---
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: mongo-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list"]
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: mongo-role
+  namespace: mongodb
+subjects:
+  - kind: ServiceAccount
+    name: mongo-role
+    namespace: mongodb
+roleRef:
+  kind: ClusterRole
+  name: mongo-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo-prod-deploy
+  namespace: mongodb
+spec:
+  serviceName: mongo-prod
+  replicas: 3 # you can try scale it up or down at your will
+  selector:
+    matchLabels:
+      app: mongo-prod
+  template:
+    metadata:
+      labels:
+        app: mongo-prod
+    spec:
+      serviceAccountName: mongo-role #THIS IS THE ROLE BINDING
+      terminationGracePeriodSeconds: 10
+      containers:
+        # DATABASE CONTAINER
+        - name: mongo-prod
+          image: mongo:5.0.15
+          command:
+            - mongod
+            - "--bind_ip_all"
+            - "--replSet"
+            - rs0
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongo-volume
+              mountPath: /data/db
+          # DEFINE CPU LIMITS (OPTIONAL)
+          resources:
+            requests:
+              cpu: "500m"
+              memory: 100Mi
+        # SIDECAR CONTAINER
+        - name: mongo-prod-sidecar
+          image: cvallance/mongo-k8s-sidecar
+          env:
+            - name: MONGO_SIDECAR_POD_LABELS
+              value: "app=mongo-prod"
+
+  volumeClaimTemplates:
+    - metadata:
+        name: mongo-volume
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: mongo-k8s-storage
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-prod-srv
+  namespace: mongodb
+spec:
+  clusterIP: None
+  selector:
+    app: mongo-prod
+  ports:
+    - name: mongo-prod
+      protocol: TCP
+      port: 27017
+      targetPort: 27017
+
+
+
+
+
+
