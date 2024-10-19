@@ -21,11 +21,11 @@ minikube start --memory=7900mb --cpus=8
 #### 1 - MongoDB
 Apply the manifest files of mongoDB 
 ```console
-kubetctl apply -f mongo-namespace.yaml 
-kubetctl apply -f mongo-sc.yaml 
-kubetctl apply -f mongo-secret.yaml 
-kubetctl apply -f mongo-prod.yaml 
-kubetctl apply -f mongo-hpa.yaml 
+kubectl apply -f mongo-namespace.yml 
+kubectl apply -f mongo-sc.yaml 
+kubectl apply -f mongo-secret.yml 
+kubectl apply -f mongo-prod.yaml 
+kubectl apply -f mongo-hpa.yaml 
 ```
 you will have something like this 
 
@@ -58,6 +58,28 @@ rs0:PRIMARY> db.createUser({
   pwd: "12345",
   roles: [ { role: "root", db: "admin" } ]
 })
+```
+Then you would see somthing like this : 
+```console
+rs0:PRIMARY> db.getUsers()
+[
+        {
+                "_id" : "admin.root",
+                "userId" : UUID("7462d577-a5d1-413a-848a-a97e3a40e2ba"),
+                "user" : "root",
+                "db" : "admin",
+                "roles" : [
+                        {
+                                "role" : "root",
+                                "db" : "admin"
+                        }
+                ],
+                "mechanisms" : [
+                        "SCRAM-SHA-1",
+                        "SCRAM-SHA-256"
+                ]
+        }
+]
 ```
 Note: If you change the credentials for the database user, ensure you also update the `mongo-secret.yaml` with the new base64-encoded username and password for Mongo Express to access the database.
 To generate the base64 values:
