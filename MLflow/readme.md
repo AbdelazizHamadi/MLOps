@@ -20,3 +20,12 @@ and then launch
 ```console
 python3 client_request.py
 ```
+
+## Results 
+Here's some screenshots that show the ~98% on testing set and ~99% on training set (you can obtain better results by playing with other parameters )
+
+![pic 1](resources/mlf1.jpg)
+![pic 3](resources/mlf3.png)
+![pic 2](resources/mlf2.jpg)
+
+
